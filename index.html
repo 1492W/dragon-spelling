@@ -194,6 +194,17 @@
     border:1px solid var(--gold);color:var(--parch);padding:10px 18px;border-radius:24px;font-weight:700;z-index:20;
     box-shadow:0 6px 20px var(--shadow);max-width:90%;text-align:center;font-size:14px;animation:fade .25s;}
   .hidden{display:none!important;}
+  .voice-panel{padding:12px 14px;}
+  .voice-head{font-family:'Cormorant Garamond';font-weight:600;font-size:15px;color:var(--parch2);margin-bottom:8px;letter-spacing:.4px;}
+  .voice-row{display:flex;gap:8px;}
+  #voice-select{flex:1;background:rgba(14,11,38,.6);color:var(--gold-bright);border:1px solid var(--line);
+    border-radius:11px;padding:10px;font-family:'Nunito';font-weight:700;font-size:14px;outline:none;-webkit-appearance:none;appearance:none;}
+  #voice-select:focus{border-color:var(--gold);}
+  .voice-test{border:none;cursor:pointer;background:linear-gradient(180deg,#3a2f7a,#2a2160);color:var(--gold-bright);
+    border:1px solid var(--gold);border-radius:11px;font-family:'Nunito';font-weight:700;font-size:13px;padding:0 16px;box-shadow:0 3px 0 #15103a;}
+  .voice-test:active{transform:translateY(2px);box-shadow:0 1px 0 #15103a;}
+  .voice-note{font-size:12px;color:var(--amethyst);margin-top:7px;line-height:1.35;}
+  .voice-note.warn{color:#f0a0b4;}
   footer{text-align:center;font-size:11px;color:#6a5fa0;margin-top:22px;}
 </style>
 </head>
@@ -212,6 +223,14 @@
       <div class="mini"><b id="st-mistakes">0</b><span>IN LAIR</span></div>
     </div>
     <button id="daily" class="daily-btn" onclick="claimDaily()">✦ Daily Verse — claim ink ✦</button>
+    <div class="panel voice-panel">
+      <div class="voice-head">🔊 Reading voice</div>
+      <div class="voice-row">
+        <select id="voice-select" onchange="onVoicePick()"></select>
+        <button class="voice-test" onclick="testVoice()">▶ Test</button>
+      </div>
+      <div class="voice-note" id="voice-note"></div>
+    </div>
     <div class="section-label">Quests</div>
     <div class="menu">
       <button class="mcard" onclick="nav('play')"><span class="ic">📖</span><span class="ti">Spellbook</span><span class="de">Chapters to illuminate</span></button>
@@ -341,7 +360,7 @@ const RARITY_W={common:60,rare:25,epic:11,legendary:3.5,mythic:0.5};
 
 /* ===================== STORAGE ===================== */
 const KEY='dragonSpelling_v1';
-const DEFAULT={ink:0,owned:{},mistakes:{},best:{},seeded:false,lastDaily:null,dailyStreak:0,spelled:0};
+const DEFAULT={ink:0,owned:{},mistakes:{},best:{},seeded:false,lastDaily:null,dailyStreak:0,spelled:0,voiceURI:null};
 function load(){try{return Object.assign({},DEFAULT,JSON.parse(localStorage.getItem(KEY))||{})}catch(e){return Object.assign({},DEFAULT,window._m||{})}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){window._m=state}}
 let state=load();
@@ -592,21 +611,70 @@ function hatch(){
   if(rar==='legendary'||rar==='mythic'){ for(let i=0;i<6;i++) setTimeout(()=>sparkle(rar==='mythic'?'🌟':'✨'),i*90); }
 }
 
-/* ===================== TTS ===================== */
-let enVoice=null, ttsOK=('speechSynthesis' in window);
-function loadVoices(){ if(!ttsOK)return; const vs=speechSynthesis.getVoices();
-  if(vs.length) enVoice=vs.find(v=>v.lang&&v.lang.toLowerCase().startsWith('en-us'))||vs.find(v=>v.lang&&v.lang.toLowerCase().startsWith('en'))||null; }
-if(ttsOK){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+/* ===================== TTS + VOICE PICKER ===================== */
+const ttsOK=('speechSynthesis' in window);
+let voices=[], curVoice=null;
+function scoreVoice(v){
+  const n=(v.name||'').toLowerCase(), l=(v.lang||'').toLowerCase();
+  let s=0;
+  if(l.startsWith('en-us')) s+=40; else if(l.startsWith('en-gb')) s+=34; else if(l.startsWith('en')) s+=28;
+  if(/google/.test(n)) s+=20;
+  if(/samantha|daniel|karen|moira|tessa|aria|jenny|guy|natural|neural|premium|enhanced/.test(n)) s+=16;
+  if(/microsoft/.test(n)) s+=10;
+  if(v.localService===false) s+=4;          // network voices often higher quality
+  if(/thai|thai/.test(n)) s-=100;
+  return s;
+}
+function englishVoices(){
+  return voices.filter(v=>{
+    const l=(v.lang||'').toLowerCase(), n=(v.name||'').toLowerCase();
+    if(l.startsWith('th')) return false;     // drop Thai-locale voices
+    if(/thai/.test(n)) return false;
+    return l.startsWith('en');
+  }).sort((a,b)=>scoreVoice(b)-scoreVoice(a));
+}
+function loadVoices(){ if(!ttsOK) return; voices=speechSynthesis.getVoices()||[]; }
+function refreshVoiceUI(){
+  if(!ttsOK){ $('#voice-note').textContent='This browser has no speech support.'; $('#voice-note').className='voice-note warn'; $('#voice-select').innerHTML='<option>— none —</option>'; return; }
+  loadVoices();
+  const list=englishVoices();
+  const sel=$('#voice-select'); sel.innerHTML='';
+  if(!list.length){
+    sel.innerHTML='<option>— no English voice installed —</option>';
+    $('#voice-note').className='voice-note warn';
+    $('#voice-note').innerHTML='No English voice found on this device. Install one in Settings → Text-to-speech (Android) or Accessibility → Spoken Content → Voices → English (iPhone/iPad), then reopen.';
+    curVoice=null; return;
+  }
+  list.forEach(v=>{ const o=document.createElement('option'); o.value=v.voiceURI; o.textContent=v.name+' ('+v.lang+')'; sel.appendChild(o); });
+  // choose saved voice, else best
+  let chosen = list.find(v=>v.voiceURI===state.voiceURI) || list[0];
+  curVoice=chosen; sel.value=chosen.voiceURI;
+  $('#voice-note').className='voice-note';
+  $('#voice-note').textContent='Pick the most natural English voice, then tap Test. Avoid any Thai voice.';
+}
+function onVoicePick(){
+  const uri=$('#voice-select').value;
+  curVoice=voices.find(v=>v.voiceURI===uri)||curVoice;
+  state.voiceURI=uri; save();
+  testVoice();
+}
+function testVoice(){ speak('dragon'); }
 function speak(word){
   const stat=$('#run-vstat');
   if(!ttsOK){ if(stat)stat.textContent='No speech on this browser'; return; }
-  loadVoices();
-  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(word); u.lang='en-US'; u.rate=.75;
-    if(enVoice)u.voice=enVoice; let started=false; u.onstart=()=>started=true;
+  if(!voices.length) loadVoices();
+  if(!curVoice){ const list=englishVoices(); curVoice=list.find(v=>v.voiceURI===state.voiceURI)||list[0]||null; }
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(word);
+    if(curVoice){ u.voice=curVoice; u.lang=curVoice.lang; } else { u.lang='en-US'; }
+    u.rate=.75;
+    let started=false; u.onstart=()=>started=true;
     speechSynthesis.speak(u);
-    setTimeout(()=>{ if(!started&&stat) stat.textContent='Open in a browser to hear audio'; },800);
+    setTimeout(()=>{ if(!started&&stat) stat.textContent='Tap “Hear it”, or open in a browser for audio'; },800);
   }catch(e){}
 }
+if(ttsOK){ loadVoices(); refreshVoiceUI(); speechSynthesis.onvoiceschanged=()=>{ loadVoices(); refreshVoiceUI(); }; }
 
 /* ===================== FX ===================== */
 function sparkle(ch){ const s=document.createElement('div'); s.className='spark'; s.textContent=ch;
