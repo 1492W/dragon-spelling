@@ -127,6 +127,14 @@
   .emo{font-size:38px;}
 
   .input-row{display:flex;gap:8px;margin-bottom:8px;}
+  .kbd{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+  .kbd-row{display:flex;gap:5px;justify-content:center;}
+  .kbd .k{flex:1;min-width:0;border:none;cursor:pointer;font-family:'Nunito';font-weight:800;font-size:18px;
+    color:var(--parch);background:linear-gradient(180deg,#2a2160,#1d1850);border:1px solid var(--line);border-radius:9px;
+    padding:11px 0;box-shadow:0 3px 0 #0c0926;text-transform:lowercase;}
+  .kbd .k:active{transform:translateY(2px);box-shadow:0 1px 0 #0c0926;background:linear-gradient(180deg,#3a2f7a,#241a55);}
+  .kbd .k.wide{flex:1.6;}
+  .kbd .k.del{color:var(--rose);} .kbd .k.enter{color:#2a1d05;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-color:var(--gold);box-shadow:0 3px 0 #8a6a1f;}
   .spell-input{flex:1;background:rgba(14,11,38,.6);border:2px solid var(--line);border-radius:14px;
     font-family:'Nunito';font-weight:800;font-size:24px;letter-spacing:3px;text-align:center;color:var(--gold-bright);
     padding:13px;outline:none;text-transform:lowercase;}
@@ -326,9 +334,10 @@
       <div class="vstat" id="duel-vstat"></div>
     </div>
     <div class="input-row">
-      <input class="spell-input" id="duel-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="spell to attack…">
+      <input class="spell-input" id="duel-input" type="text" readonly inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="spell to attack…">
       <button class="go" onclick="submitDuel()">⚔️</button>
     </div>
+    <div class="kbd" id="kbd-duel"></div>
     <div class="feedback" id="duel-feedback"></div>
     <div class="player-bar">
       <span>🛡️ You</span>
@@ -361,9 +370,10 @@
     </div>
     <div id="opts" class="opts hidden"></div>
     <div class="input-row" id="input-row">
-      <input class="spell-input" id="spell-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="spell it…">
+      <input class="spell-input" id="spell-input" type="text" readonly inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="spell it…">
       <button class="go" onclick="submitRun()">✓</button>
     </div>
+    <div class="kbd" id="kbd-run"></div>
     <div class="feedback" id="run-feedback"></div>
   </div>
 
@@ -563,8 +573,9 @@ function next(){
   if(isVowel){ renderFrame(); renderVowelInput(); $('#run-prompt').textContent='Fill the missing vowel'; }
   else {
     $('#opts').classList.add('hidden'); $('#input-row').classList.remove('hidden');
+    $('#kbd-run').classList.remove('hidden');
     $('#run-display').textContent='• • •';
-    const inp=$('#spell-input'); inp.value=''; inp.disabled=false; setTimeout(()=>inp.focus(),60);
+    const inp=$('#spell-input'); inp.value=''; inp.disabled=false;
     $('#run-prompt').textContent= run.lair? 'Tame this word — spell it' : 'Listen, then spell the word';
   }
   setTimeout(speakCur,250);
@@ -588,6 +599,7 @@ function renderVowelInput(){
   $('#md-tap').classList.toggle('on',vowelMode==='tap'); $('#md-type').classList.toggle('on',vowelMode==='type');
   if(vowelMode==='tap'){
     $('#input-row').classList.add('hidden'); $('#opts').classList.remove('hidden');
+    $('#kbd-run').classList.add('hidden');
     const o=$('#opts'); o.innerHTML='';
     run.cur.opts.slice().sort(()=>Math.random()-0.5).forEach(opt=>{
       const b=document.createElement('button'); b.className='opt'; b.textContent=opt;
@@ -595,7 +607,8 @@ function renderVowelInput(){
     });
   } else {
     $('#opts').classList.add('hidden'); $('#input-row').classList.remove('hidden');
-    const inp=$('#spell-input'); inp.value=''; inp.disabled=false; setTimeout(()=>inp.focus(),50);
+    $('#kbd-run').classList.remove('hidden');
+    const inp=$('#spell-input'); inp.value='';
   }
 }
 function chooseVowel(opt,btn){
@@ -753,9 +766,37 @@ function toast(msg){ let t=document.querySelector('.toast'); if(t)t.remove();
   t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
   clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),2200); }
 
-/* keyboard: Enter submits in run */
+/* ===================== In-app A–Z keyboard (no device suggestions) ===================== */
+const KB_ROWS=[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['z','x','c','v','b','n','m']];
+function buildKbd(containerId,target){
+  const el=document.getElementById(containerId); if(!el) return; el.innerHTML='';
+  KB_ROWS.forEach((row,ri)=>{
+    const r=document.createElement('div'); r.className='kbd-row';
+    row.forEach(ch=>{ const b=document.createElement('button'); b.className='k'; b.textContent=ch; b.onclick=()=>kbPress(target,ch); r.appendChild(b); });
+    if(ri===2){ const del=document.createElement('button'); del.className='k del wide'; del.textContent='⌫'; del.onclick=()=>kbPress(target,'del'); r.appendChild(del); }
+    el.appendChild(r);
+  });
+  const er=document.createElement('div'); er.className='kbd-row';
+  const ent=document.createElement('button'); ent.className='k enter wide'; ent.textContent= target==='duel'?'⚔️ Attack':'✓ Enter'; ent.onclick=()=>kbPress(target,'enter');
+  er.appendChild(ent); el.appendChild(er);
+}
+function kbInput(target){ return target==='duel'?$('#duel-input'):$('#spell-input'); }
+function kbPress(target,ch){
+  const inp=kbInput(target); if(!inp) return;
+  if(ch==='del') inp.value=inp.value.slice(0,-1);
+  else if(ch==='enter'){ target==='duel'?submitDuel():submitRun(); return; }
+  else if(inp.value.length<18) inp.value+=ch;
+}
+buildKbd('kbd-run','run'); buildKbd('kbd-duel','duel');
+/* desktop physical keyboard (inputs are readonly, so route keys ourselves) */
 document.addEventListener('keydown',e=>{
-  if($('#run').classList.contains('active') && e.key==='Enter') submitRun();
+  let target=null;
+  if($('#run').classList.contains('active')) target='run';
+  else if($('#duel').classList.contains('active')) target='duel';
+  if(!target) return;
+  if(/^[a-zA-Z]$/.test(e.key)){ kbPress(target,e.key.toLowerCase()); e.preventDefault(); }
+  else if(e.key==='Backspace'){ kbPress(target,'del'); e.preventDefault(); }
+  else if(e.key==='Enter'){ kbPress(target,'enter'); e.preventDefault(); }
 });
 
 /* ===================== SPELL DUEL / SPIRE ===================== */
@@ -818,7 +859,7 @@ function duelNext(){
   $('#duel-display').textContent='• • •'; $('#duel-display').classList.remove('peeking');
   $('#duel-feedback').textContent=''; $('#duel-feedback').className='feedback';
   $('#duel-vstat').textContent='';
-  const inp=$('#duel-input'); inp.value=''; inp.disabled=false; setTimeout(()=>{inp.focus();speakDuel();},200);
+  const inp=$('#duel-input'); inp.value=''; inp.disabled=false; setTimeout(()=>{speakDuel();},200);
 }
 function speakDuel(){ if(duel&&duel.cur) speak(duel.cur); }
 function peekDuel(){
@@ -898,7 +939,6 @@ function showDuelResult(win,reward,dropMsg){
   topInk();
 }
 function quitDuel(){ if(duel&&!duel.finished){ state.ink+=duel.ink; duel.finished=true; save(); } nav('home'); }
-document.addEventListener('keydown',e=>{ if($('#duel').classList.contains('active') && e.key==='Enter') submitDuel(); });
 
 refreshHome();
 </script>
