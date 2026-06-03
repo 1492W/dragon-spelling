@@ -244,6 +244,32 @@
   .quest.claimed .q-label{color:var(--amethyst);}
   .q-done{color:var(--leaf);font-weight:800;font-size:18px;}
 
+  .fry-card{background:linear-gradient(160deg,#1d2e2a,#13241f);border-color:#4a8a6a;box-shadow:0 4px 0 #0c0926,0 0 18px rgba(95,184,122,.18);}
+  .fq-hero{text-align:center;background:rgba(14,11,38,.5);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;}
+  .fq-big b{font-family:'Grenze Gotisch';font-size:40px;color:var(--gold-bright);}
+  .fq-big span{font-family:'Cormorant Garamond';font-size:15px;color:var(--amethyst);margin-left:6px;}
+  .fq-ring{height:12px;border-radius:8px;background:rgba(14,11,38,.7);border:1px solid var(--line);overflow:hidden;margin:10px 0;}
+  .fq-ring i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--leaf));transition:width .4s;}
+  .fq-stats{display:flex;gap:8px;}
+  .fq-stats>div{flex:1;background:rgba(14,11,38,.4);border:1px solid var(--line);border-radius:10px;padding:8px 4px;}
+  .fq-stats b{display:block;font-size:20px;color:var(--parch);font-weight:800;}
+  .fq-stats span{font-size:10px;color:var(--amethyst);}
+  .fq-note{text-align:center;font-family:'Cormorant Garamond';font-size:14px;color:var(--gold-bright);margin-bottom:12px;}
+  .go-big{width:100%;cursor:pointer;font-family:'Nunito';font-weight:800;font-size:17px;color:#072018;
+    background:linear-gradient(180deg,var(--leaf),var(--teal));border:none;border-radius:14px;padding:14px;box-shadow:0 4px 0 #1c5a44;margin-bottom:16px;}
+  .go-big:active{transform:translateY(3px);box-shadow:0 1px 0 #1c5a44;}
+  .fq-sets-title{font-family:'Cormorant Garamond';font-weight:600;color:var(--parch2);margin-bottom:8px;letter-spacing:.4px;}
+  .fq-sets{display:flex;flex-direction:column;gap:7px;}
+  .fq-set{display:flex;align-items:center;gap:9px;}
+  .fq-set.locked{opacity:.5;}
+  .fq-set-n{font-size:12px;font-weight:700;color:var(--parch);width:64px;flex:none;}
+  .fq-set-bar{flex:1;height:8px;border-radius:6px;background:rgba(14,11,38,.7);border:1px solid var(--line);overflow:hidden;}
+  .fq-set-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));}
+  .fq-set-c{font-size:11px;color:var(--amethyst);width:46px;text-align:right;flex:none;}
+  .spire-choose{display:flex;gap:8px;margin:-4px 0 12px;}
+  .spire-mini{flex:1;cursor:pointer;font-family:'Nunito';font-weight:700;font-size:12px;color:var(--amethyst);
+    background:rgba(14,11,38,.5);border:1px solid var(--line);border-radius:11px;padding:9px 8px;}
+  .spire-mini:active{transform:translateY(2px);}
   .hero-orbit{position:absolute;inset:0;animation:orbit 48s linear infinite;}
   @keyframes orbit{to{transform:rotate(360deg);}}
   .hero-orbit .orb{position:absolute;font-size:19px;transform:translate(-50%,-50%);filter:drop-shadow(0 0 5px rgba(154,123,224,.5));animation:counter 48s linear infinite;}
@@ -347,6 +373,15 @@
       </span>
       <span class="spire-floor">Floor <b id="spire-floor-lbl">1</b></span>
     </button>
+    <div id="spire-choose" class="spire-choose"></div>
+    <button class="spire-card fry-card" onclick="openFry()">
+      <span class="spire-ic">📜</span>
+      <span class="spire-body">
+        <span class="spire-ti">Fry Quest</span>
+        <span class="spire-de">Master the 1000 most-used words</span>
+      </span>
+      <span class="spire-floor"><b id="fry-count-lbl">0</b>/1000</span>
+    </button>
     <div class="section-label">Quests</div>
     <div class="menu">
       <button class="mcard" onclick="nav('play')"><span class="ic">📖</span><span class="ti">Spellbook</span><span class="de">Chapters to illuminate</span></button>
@@ -382,6 +417,43 @@
       <div class="hpbar player-hp"><i id="player-hp-fill"></i><span id="player-hp-txt">100 / 100</span></div>
     </div>
     <div class="party" id="duel-party"></div>
+  </div>
+
+  <!-- FRY QUEST: dashboard -->
+  <div id="fqhome" class="screen">
+    <div class="scr-head"><button class="back-btn" onclick="nav('home')">‹ Lair</button><h2>Fry Quest</h2></div>
+    <div class="fq-hero">
+      <div class="fq-big"><b id="fq-mastered">0</b><span>/ 1000 mastered</span></div>
+      <div class="fq-ring"><i id="fq-ring-fill"></i></div>
+      <div class="fq-stats">
+        <div><b id="fq-progress">0</b><span>learning</span></div>
+        <div><b id="fq-due">0</b><span>due today</span></div>
+        <div><b id="fq-pace">0</b><span>mastered/7d</span></div>
+      </div>
+    </div>
+    <div class="fq-note" id="fq-pace-note"></div>
+    <button class="go-big" id="fq-begin" onclick="fqBegin()">▶ Begin practice</button>
+    <div class="fq-sets-title">The ten hundreds</div>
+    <div id="fq-sets" class="fq-sets"></div>
+  </div>
+
+  <!-- FRY QUEST: practice run -->
+  <div id="fqrun" class="screen">
+    <div class="scr-head"><button class="back-btn" onclick="fqQuit()">✕ Done</button><h2 id="fq-title">Practice</h2></div>
+    <div class="runbar"><span id="fq-prog">0 / 0</span><span id="fq-tag">📜 Fry</span></div>
+    <div class="prompt" id="fq-prompt">Listen, then spell the word</div>
+    <div class="stage">
+      <button class="audio-btn" onclick="fqSpeak()">🔊 Hear it</button>
+      <button class="peek" onclick="fqPeek()">👁 Peek</button>
+      <div id="fq-display" class="word-display"></div>
+      <div class="vstat" id="fq-vstat"></div>
+    </div>
+    <div class="input-row">
+      <input class="spell-input" id="fq-input" type="text" readonly inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="spell it…">
+      <button class="go" onclick="fqSubmit()">✓</button>
+    </div>
+    <div class="kbd" id="kbd-fq"></div>
+    <div class="feedback" id="fq-feedback"></div>
   </div>
 
   <!-- PLAY (chapters) -->
@@ -487,6 +559,8 @@ const CHAPTERS=[
 ];
 
 // Dragons (distinct spelling-themed roster)
+const FRY=["the", "of", "and", "a", "to", "in", "is", "you", "that", "it", "he", "was", "for", "on", "are", "as", "with", "his", "they", "i", "at", "be", "this", "have", "from", "or", "one", "had", "by", "words", "but", "not", "what", "all", "were", "we", "when", "your", "can", "said", "there", "use", "an", "each", "which", "she", "do", "how", "their", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these", "so", "some", "her", "would", "make", "like", "him", "into", "time", "has", "look", "two", "more", "write", "go", "see", "number", "no", "way", "could", "people", "my", "than", "first", "water", "been", "called", "who", "oil", "sit", "now", "find", "long", "down", "day", "did", "get", "come", "made", "may", "part", "over", "new", "sound", "take", "only", "little", "work", "know", "place", "years", "live", "me", "back", "give", "most", "very", "after", "things", "our", "just", "name", "good", "sentence", "man", "think", "say", "great", "where", "help", "through", "much", "before", "line", "right", "too", "means", "old", "any", "same", "tell", "boy", "follow", "came", "want", "show", "also", "around", "form", "three", "small", "set", "put", "end", "does", "another", "well", "large", "must", "big", "even", "such", "because", "turn", "here", "why", "ask", "went", "men", "read", "need", "land", "different", "home", "us", "move", "try", "kind", "hand", "picture", "again", "change", "off", "play", "spell", "air", "away", "animal", "house", "point", "page", "letter", "mother", "answer", "found", "study", "still", "learn", "should", "america", "world", "high", "every", "near", "add", "food", "between", "own", "below", "country", "plant", "last", "school", "father", "keep", "tree", "never", "start", "city", "earth", "eyes", "light", "thought", "head", "under", "story", "saw", "left", "don't", "few", "while", "along", "might", "close", "something", "seem", "next", "hard", "open", "example", "begin", "life", "always", "those", "both", "paper", "together", "got", "group", "often", "run", "important", "until", "children", "side", "feet", "car", "mile", "night", "walk", "white", "sea", "began", "grow", "took", "river", "four", "carry", "state", "once", "book", "hear", "stop", "without", "second", "late", "miss", "idea", "enough", "eat", "face", "watch", "far", "indian", "real", "almost", "let", "above", "girl", "sometimes", "mountains", "cut", "young", "talk", "soon", "list", "song", "being", "leave", "family", "it's", "body", "music", "color", "stand", "sun", "questions", "fish", "area", "mark", "dog", "horse", "birds", "problem", "complete", "room", "knew", "since", "ever", "piece", "told", "usually", "didn't", "friends", "easy", "heard", "order", "red", "door", "sure", "become", "top", "ship", "across", "today", "during", "short", "better", "best", "however", "low", "hours", "black", "products", "happened", "whole", "measure", "remember", "early", "waves", "reached", "listen", "wind", "rock", "space", "covered", "fast", "several", "hold", "himself", "toward", "five", "step", "morning", "passed", "vowel", "true", "hundred", "against", "pattern", "numeral", "table", "north", "slowly", "money", "map", "farm", "pulled", "draw", "voice", "seen", "cold", "cried", "plan", "notice", "south", "sing", "war", "ground", "fall", "king", "town", "i'll", "unit", "figure", "certain", "field", "travel", "wood", "fire", "upon", "done", "english", "road", "half", "ten", "fly", "gave", "box", "finally", "wait", "correct", "oh", "quickly", "person", "became", "shown", "minutes", "strong", "verb", "stars", "front", "feel", "fact", "inches", "street", "decided", "contain", "course", "surface", "produce", "building", "ocean", "class", "note", "nothing", "rest", "carefully", "scientists", "inside", "wheels", "stay", "green", "known", "island", "week", "less", "machine", "base", "ago", "stood", "plane", "system", "behind", "ran", "round", "boat", "game", "force", "brought", "understand", "warm", "common", "bring", "explain", "dry", "though", "language", "shape", "deep", "thousands", "yes", "clear", "equation", "yet", "government", "filled", "heat", "full", "hot", "check", "object", "am", "rule", "among", "noun", "power", "cannot", "able", "six", "size", "dark", "ball", "material", "special", "heavy", "fine", "pair", "circle", "include", "built", "can't", "matter", "square", "syllables", "perhaps", "bill", "felt", "suddenly", "test", "direction", "center", "farmers", "ready", "anything", "divided", "general", "energy", "subject", "europe", "moon", "region", "return", "believe", "dance", "members", "picked", "simple", "cells", "paint", "mind", "love", "cause", "rain", "exercise", "eggs", "train", "blue", "wish", "drop", "developed", "window", "difference", "distance", "heart", "site", "sum", "summer", "wall", "forest", "probably", "legs", "sat", "main", "winter", "wide", "written", "length", "reason", "kept", "interest", "arms", "brother", "race", "present", "beautiful", "store", "job", "edge", "past", "sign", "record", "finished", "discovered", "wild", "happy", "beside", "gone", "sky", "grass", "million", "west", "lay", "weather", "root", "instruments", "meet", "third", "months", "paragraph", "raised", "represent", "soft", "whether", "clothes", "flowers", "shall", "teacher", "held", "describe", "drive", "cross", "speak", "solve", "appear", "metal", "son", "either", "ice", "sleep", "village", "factors", "result", "jumped", "snow", "ride", "care", "floor", "hill", "pushed", "baby", "buy", "century", "outside", "everything", "tall", "already", "instead", "phrase", "soil", "bed", "copy", "free", "hope", "spring", "case", "laughed", "nation", "quite", "type", "themselves", "temperature", "bright", "lead", "everyone", "method", "section", "lake", "iron", "within", "dictionary", "hair", "age", "amount", "scale", "pounds", "although", "per", "broken", "moment", "tiny", "possible", "gold", "milk", "quiet", "natural", "lot", "stone", "act", "build", "middle", "speed", "count", "consonant", "someone", "sail", "rolled", "bear", "wonder", "smiled", "angle", "fraction", "africa", "killed", "melody", "bottom", "trip", "hole", "poor", "let's", "fight", "surprise", "french", "died", "beat", "exactly", "remain", "dress", "cat", "couldn't", "fingers", "row", "least", "catch", "climbed", "wrote", "shouted", "continued", "itself", "else", "plains", "gas", "england", "burning", "design", "joined", "foot", "law", "ears", "glass", "you're", "grew", "skin", "valley", "cents", "key", "president", "brown", "trouble", "cool", "cloud", "lost", "sent", "symbols", "wear", "bad", "save", "experiment", "engine", "alone", "drawing", "east", "choose", "single", "touch", "information", "express", "mouth", "yard", "equal", "decimal", "yourself", "control", "practice", "report", "straight", "rise", "statement", "stick", "party", "seeds", "suppose", "woman", "coast", "bank", "period", "wire", "pay", "clean", "visit", "bit", "whose", "received", "garden", "please", "strange", "caught", "fell", "team", "god", "captain", "direct", "ring", "serve", "child", "desert", "increase", "history", "cost", "maybe", "business", "separate", "break", "uncle", "hunting", "flow", "lady", "students", "human", "art", "feeling", "supply", "corner", "electric", "insects", "crops", "tone", "hit", "sand", "doctor", "provide", "thus", "won't", "cook", "bones", "mall", "board", "modern", "compound", "mine", "wasn't", "fit", "addition", "belong", "safe", "soldiers", "guess", "silent", "trade", "rather", "compare", "crowd", "poem", "enjoy", "elements", "indicate", "except", "expect", "flat", "seven", "interesting", "sense", "string", "blow", "famous", "value", "wings", "movement", "pole", "exciting", "branches", "thick", "blood", "lie", "spot", "bell", "fun", "loud", "consider", "suggested", "thin", "position", "entered", "fruit", "tied", "rich", "dollars", "send", "sight", "chief", "japanese", "stream", "planets", "rhythm", "eight", "science", "major", "observe", "tube", "necessary", "weight", "meat", "lifted", "process", "army", "hat", "property", "particular", "swim", "terms", "current", "park", "sell", "shoulder", "industry", "wash", "block", "spread", "cattle", "wife", "sharp", "company", "radio", "we'll", "action", "capital", "factories", "settled", "yellow", "isn't", "southern", "truck", "fair", "printed", "wouldn't", "ahead", "chance", "born", "level", "triangle", "molecules", "france", "repeated", "column", "western", "church", "sister", "oxygen", "plural", "various", "agreed", "opposite", "wrong", "chart", "prepared", "pretty", "solution", "fresh", "shop", "suffix", "especially", "shoes", "actually", "nose", "afraid", "dead", "sugar", "adjective", "fig", "office", "huge", "gun", "similar", "death", "score", "forward", "stretched", "experience", "rose", "allow", "fear", "workers", "washington", "greek", "women", "bought", "led", "march", "northern", "create", "british", "difficult", "match", "win", "doesn't", "steel", "total", "deal", "determine", "evening", "hoe", "rope", "cotton", "apple", "details", "entire", "corn", "substances", "smell", "tools", "conditions", "cows", "track", "arrived", "located", "sir", "seat", "division", "effect", "underline", "view"];
+const FRY_SET=100;
 const DRAGONS=[
   {id:'inkling',name:'Inkling',emoji:'🐲',rarity:'common',blurb:'A spark of wet ink, freshly hatched.'},
   {id:'vowelwisp',name:'Vowel Wisp',emoji:'🦎',rarity:'common',blurb:'Hums the five vowel songs.'},
@@ -501,6 +575,14 @@ const DRAGONS=[
   {id:'homophone',name:'Homophone Hydra',emoji:'🐉',rarity:'legendary',blurb:'Two heads argue: their, there, they\u2019re.'},
   {id:'suffix',name:'Suffix Sphinx',emoji:'🦁',rarity:'legendary',blurb:'Guards the rules of -ing, -ed, -er.'},
   {id:'wordsmith',name:'The Wordsmith',emoji:'🐲',rarity:'mythic',blurb:'Forged every word in the Spellbook.'},
+  {id:'capital',name:'Capital Cub',emoji:'🐯',rarity:'common',blurb:'Roars the first letter of every name.'},
+  {id:'dotsprite',name:'Dot Sprite',emoji:'🟣',rarity:'common',blurb:'Dots every i and crosses every t.'},
+  {id:'rhyme',name:'Rhyme Wyrm',emoji:'🎶',rarity:'rare',blurb:'Coils words that sound the same.'},
+  {id:'plural',name:'Plural Python',emoji:'🐍',rarity:'rare',blurb:'Adds the -s and -es without a hiss.'},
+  {id:'prefix',name:'Prefix Phoenix',emoji:'🦅',rarity:'epic',blurb:'Re-, un-, dis- burst into flame at the front.'},
+  {id:'syllable',name:'Syllable Salamander',emoji:'🦎',rarity:'epic',blurb:'Breaks long words into safe little beats.'},
+  {id:'grammar',name:'Grammar Griffin',emoji:'🦁',rarity:'legendary',blurb:'Keeper of every spelling rule.'},
+  {id:'lexicon',name:'Lexicon Leviathan',emoji:'🐋',rarity:'mythic',blurb:'A whole dictionary swims in its wake.'},
 ];
 const RARITY_W={common:60,rare:25,epic:11,legendary:3.5,mythic:0.5};
 // Recycle value when a hatch produces a dragon already owned (Ink refund by rarity)
@@ -520,6 +602,14 @@ const ABIL={
   homophone:{ink:2,desc:'Doubles duel ink'},
   suffix:{atk:18,desc:'+18 attack'},
   wordsmith:{atk:25,crit:0.5,revealLen:true,desc:'+25 atk · bigger crits · shows length'},
+  capital:{atk:5,desc:'+5 attack'},
+  dotsprite:{ink:1.12,desc:'+12% ink from duels'},
+  rhyme:{time:1.2,desc:'+1.2s easier timing'},
+  plural:{revealLen:true,desc:'Shows the word length'},
+  prefix:{atk:14,comboStart:2,desc:'+14 atk · starts combo at ×1.2'},
+  syllable:{hp:30,time:0.8,desc:'+30 max HP · +0.8s timing'},
+  grammar:{atk:16,ink:1.5,desc:'+16 atk · +50% ink'},
+  lexicon:{atk:22,crit:0.4,hp:40,shield:true,desc:'+22 atk · big crits · +40 HP · shields a miss'},
 };
 function partyIds(){
   let p=(state.party||[]).filter(id=>state.owned[id]);
@@ -531,16 +621,17 @@ function partyIds(){
   return p.slice(0,3);
 }
 function partyFx(){
-  const fx={atk:0,crit:0,time:0,ink:1,shield:false,revealFirst:false,revealLen:false};
+  const fx={atk:0,crit:0,time:0,ink:1,shield:false,revealFirst:false,revealLen:false,hp:0,comboStart:0};
   partyIds().forEach(id=>{ const a=ABIL[id]; if(!a)return;
-    fx.atk+=a.atk||0; fx.crit+=a.crit||0; fx.time+=a.time||0; fx.ink*=a.ink||1;
+    fx.atk+=a.atk||0; fx.crit+=a.crit||0; fx.time+=a.time||0; fx.ink*=a.ink||1; fx.hp+=a.hp||0;
+    fx.comboStart=Math.max(fx.comboStart,a.comboStart||0);
     fx.shield=fx.shield||!!a.shield; fx.revealFirst=fx.revealFirst||!!a.revealFirst; fx.revealLen=fx.revealLen||!!a.revealLen; });
   return fx;
 }
 
 /* ===================== STORAGE ===================== */
 const KEY='dragonSpelling_v1';
-const DEFAULT={ink:0,owned:{},mistakes:{},best:{},seeded:false,lastDaily:null,dailyStreak:0,spelled:0,voiceURI:null,spireFloor:1,spireBest:0,party:[],seals:{},quests:{},dupes:{}};
+const DEFAULT={ink:0,owned:{},mistakes:{},best:{},seeded:false,lastDaily:null,dailyStreak:0,spelled:0,voiceURI:null,spireFloor:1,spireBest:0,party:[],seals:{},quests:{},dupes:{},fry:{}};
 function load(){try{return Object.assign({},DEFAULT,JSON.parse(localStorage.getItem(KEY))||{})}catch(e){return Object.assign({},DEFAULT,window._m||{})}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){window._m=state}}
 let state=load();
@@ -569,6 +660,15 @@ function refreshHome(){
   $('#st-mistakes').textContent=mc;
   $('#lair-card').style.display = mc? '' : 'none';
   const fl=$('#spire-floor-lbl'); if(fl) fl.textContent=state.spireFloor||1;
+  const fcl=$('#fry-count-lbl'); if(fcl) fcl.textContent=fqMasteredCount();
+  const sc=$('#spire-choose');
+  if(sc){
+    const f=state.spireFloor||1;
+    sc.innerHTML = f>6
+      ? `<button class="spire-mini" onclick="spireGo(6)">↺ Practice medium · F6</button>`+
+        `<button class="spire-mini" onclick="spireGo(1)">⤴ From the start · F1</button>`
+      : '';
+  }
   const today=new Date().toISOString().slice(0,10);
   const d=$('#daily');
   if(state.lastDaily===today){ d.classList.add('done'); d.textContent='✦ Daily Verse claimed — come back tomorrow ✦'; }
@@ -917,19 +1017,20 @@ function buildKbd(containerId,target){
   const ent=document.createElement('button'); ent.className='k enter wide'; ent.textContent= target==='duel'?'⚔️ Attack':'✓ Enter'; ent.onclick=()=>kbPress(target,'enter');
   er.appendChild(ent); el.appendChild(er);
 }
-function kbInput(target){ return target==='duel'?$('#duel-input'):$('#spell-input'); }
+function kbInput(target){ return target==='duel'?$('#duel-input'):target==='fq'?$('#fq-input'):$('#spell-input'); }
 function kbPress(target,ch){
   const inp=kbInput(target); if(!inp) return;
   if(ch==='del') inp.value=inp.value.slice(0,-1);
-  else if(ch==='enter'){ target==='duel'?submitDuel():submitRun(); return; }
+  else if(ch==='enter'){ target==='duel'?submitDuel():target==='fq'?fqSubmit():submitRun(); return; }
   else if(inp.value.length<18) inp.value+=ch;
 }
-buildKbd('kbd-run','run'); buildKbd('kbd-duel','duel');
+buildKbd('kbd-run','run'); buildKbd('kbd-duel','duel'); buildKbd('kbd-fq','fq');
 /* desktop physical keyboard (inputs are readonly, so route keys ourselves) */
 document.addEventListener('keydown',e=>{
   let target=null;
   if($('#run').classList.contains('active')) target='run';
   else if($('#duel').classList.contains('active')) target='duel';
+  else if($('#fqrun').classList.contains('active')) target='fq';
   if(!target) return;
   if(/^[a-zA-Z]$/.test(e.key)){ kbPress(target,e.key.toLowerCase()); e.preventDefault(); }
   else if(e.key==='Backspace'){ kbPress(target,'del'); e.preventDefault(); }
@@ -962,14 +1063,16 @@ function floorWords(floor){
 }
 let duel=null;
 function enterSpire(){ startFloor(state.spireFloor||1); }
+function spireGo(floor){ startFloor(floor); }
 function startFloor(floor){
   const boss = floor%5===0;
   const eHP = Math.round((28 + floor*12) * (boss?2.2:1));
-  duel={floor,boss,eMax:eHP,eHP,pMax:100,pHP:100,combo:0,maxCombo:0,ink:0,
+  const fx=partyFx();
+  const pMax=100+(fx.hp||0);
+  duel={floor,boss,eMax:eHP,eHP,pMax,pHP:pMax,combo:fx.comboStart||0,maxCombo:fx.comboStart||0,ink:0,
         words:floorWords(floor).slice().sort(()=>Math.random()-0.5),wi:0,locked:false,finished:false,
-        fx:partyFx(),shieldReady:false,
+        fx,shieldReady:fx.shield,
         emoji: boss?'🐲':WRAITHS[Math.min(WRAITHS.length-1,Math.floor((floor-1)/2))]};
-  duel.shieldReady=duel.fx.shield;
   $('#duel-title').textContent='Spire · Floor '+floor+(boss?' · BOSS':'');
   $('#enemy-emoji').textContent=duel.emoji;
   $('#enemy-name').textContent= boss? 'Elder Word Wraith' : 'Word Wraith';
@@ -1076,7 +1179,7 @@ function winFloor(){
   const reward=Math.round((20+duel.floor*6)*(duel.boss?2:1)*inkMult());
   duel.ink+=reward; state.ink+=duel.ink;
   if(duel.floor>=(state.spireBest||0)) state.spireBest=duel.floor;
-  state.spireFloor=duel.floor+1; questBump('floors');
+  state.spireFloor=Math.max(state.spireFloor||1, duel.floor+1); questBump('floors');
   let dropMsg=''; if(duel.boss){ const d=freeDrop(); if(d) dropMsg=' · A '+d.name+' joins you!'; }
   save(); showDuelResult(true,reward,dropMsg);
 }
@@ -1098,6 +1201,91 @@ function showDuelResult(win,reward,dropMsg){
   topInk();
 }
 function quitDuel(){ if(duel&&!duel.finished){ state.ink+=duel.ink; duel.finished=true; save(); } nav('home'); }
+
+/* ===================== FRY QUEST (1000 high-frequency words · Leitner SRS) ===================== */
+const FQ_INT=[0,1,3,7,14];   // days-until-due by box (0..4); box 5 = mastered
+const FQ_NEW_PER=6;          // new words introduced per session (~6/day → 1000 in 6 months)
+const FQ_SESSION=16;         // max items per session
+function fqDay(){ return Math.floor(Date.now()/86400000); }
+function fqRec(w){ return state.fry[w]; }
+function fqMasteredCount(){ return Object.values(state.fry).filter(r=>r.b>=5).length; }
+function fqLearningCount(){ return Object.values(state.fry).filter(r=>r.b<5).length; }
+function fqDueList(){ const t=fqDay(); return Object.keys(state.fry).filter(w=>{const r=state.fry[w]; return r.b<5 && r.d<=t;}); }
+function fqUnlockedSets(){ let u=1; for(let s=0;s<10;s++){ const sl=FRY.slice(s*100,s*100+100); const mc=sl.filter(w=>fqRec(w)&&fqRec(w).b>=5).length; if(mc>=80) u=Math.min(10,s+2); else break; } return u; }
+function fqNextNewWords(n){ const limit=fqUnlockedSets()*100, out=[]; for(let i=0;i<limit&&out.length<n;i++){ const w=FRY[i]; if(!state.fry[w]) out.push(w); } return out; }
+function openFry(){ renderFryHome(); nav('fqhome'); }
+function renderFryHome(){
+  const m=fqMasteredCount();
+  $('#fq-mastered').textContent=m;
+  $('#fq-progress').textContent=fqLearningCount();
+  $('#fq-due').textContent=fqDueList().length;
+  const t=fqDay(); const pace=Object.values(state.fry).filter(r=>r.b>=5&&r.md!=null&&(t-r.md)<7).length;
+  $('#fq-pace').textContent=pace;
+  $('#fq-ring-fill').style.width=(m/1000*100)+'%';
+  const need=39;
+  $('#fq-pace-note').textContent = m>=1000 ? 'Goal complete — every Fry word mastered! 🐉'
+    : (pace>=need ? `On track 🎯  (${pace} this week · ~${need}/wk hits 1000 in 6 months)` : `Aim ~${need}/week to reach 1000 in 6 months  (this week: ${pace})`);
+  const el=$('#fq-sets'); el.innerHTML=''; const unlocked=fqUnlockedSets();
+  for(let s=0;s<10;s++){
+    const sl=FRY.slice(s*100,s*100+100);
+    const mc=sl.filter(w=>fqRec(w)&&fqRec(w).b>=5).length;
+    const locked=s>=unlocked;
+    const row=document.createElement('div'); row.className='fq-set'+(locked?' locked':'');
+    row.innerHTML=`<span class="fq-set-n">${locked?'🔒 ':''}Set ${s+1}</span><div class="fq-set-bar"><i style="width:${mc}%"></i></div><span class="fq-set-c">${mc}/100</span>`;
+    el.appendChild(row);
+  }
+}
+let fq=null;
+function fqBegin(){
+  const due=fqDueList(), neu=fqNextNewWords(FQ_NEW_PER);
+  let queue=due.concat(neu);
+  if(!queue.length){ toast('All caught up — no reviews due right now! 🐉'); return; }
+  queue=queue.slice(0,FQ_SESSION).sort(()=>Math.random()-0.5);
+  fq={queue,i:0,total:queue.length,correct:0,mastered:0,locked:false,finished:false};
+  $('#fq-title').textContent='Fry Practice';
+  nav('fqrun'); $('#kbd-fq').classList.remove('hidden'); fqNext();
+}
+function fqNext(){
+  if(!fq||fq.finished) return;
+  if(fq.i>=fq.queue.length) return fqFinish();
+  fq.cur=fq.queue[fq.i++]; fq.qStart=Date.now(); fq.peeked=false;
+  $('#fq-display').textContent='• • •'; $('#fq-display').classList.remove('peeking');
+  $('#fq-feedback').textContent=''; $('#fq-feedback').className='feedback';
+  $('#fq-prog').textContent=fq.i+' / '+fq.total;
+  const inp=$('#fq-input'); inp.value=''; inp.disabled=false;
+  setTimeout(fqSpeak,200);
+}
+function fqSpeak(){ if(fq&&fq.cur) speak(fq.cur); }
+function fqPeek(){ if(!fq||fq.locked) return; fq.peeked=true; const d=$('#fq-display'); d.textContent=fq.cur; d.classList.add('peeking'); setTimeout(()=>{ if(fq&&!fq.locked){ d.textContent='• • •'; d.classList.remove('peeking'); } },1100); }
+function fqSubmit(){
+  if(!fq||fq.locked||fq.finished) return;
+  const val=($('#fq-input').value||'').trim().toLowerCase(); if(!val) return;
+  fq.locked=true; $('#fq-input').disabled=true;
+  const w=fq.cur, fb=$('#fq-feedback');
+  const elapsed=(Date.now()-fq.qStart)/1000;
+  const ok=val===w.toLowerCase();
+  const t=fqDay();
+  let r=state.fry[w]||{b:0,d:t,md:null};
+  if(ok){
+    fq.correct++;
+    if(!fq.peeked) r.b=Math.min(5,r.b+1);     // peeked correct holds the box (no free promotion)
+    r.d=t+(FQ_INT[Math.min(r.b,FQ_INT.length-1)]||14);
+    if(r.b>=5 && r.md==null){ r.md=t; fq.mastered++; }
+    $('#fq-display').textContent=w;
+    fb.textContent=(r.b>=5?'🐉 Mastered!':'✓ '+(fq.peeked?'(peeked)':'box '+r.b))+'  '+elapsed.toFixed(1)+'s';
+    fb.className='feedback ok';
+    if(r.b>=5) sparkle('🐉'); else if(!fq.peeked && elapsed<TIER.spell.swift) sparkle('✨');
+  } else {
+    r.b=0; r.d=t;
+    let html=''; for(let i=0;i<w.length;i++){ const c=val[i]; html+=(c&&c.toLowerCase()===w[i].toLowerCase())?w[i]:`<span class="miss">${w[i]}</span>`; }
+    $('#fq-display').innerHTML=html;
+    fb.textContent='✗ '+w; fb.className='feedback no';
+  }
+  state.fry[w]=r; questBump('spelled'); save();
+  setTimeout(()=>{ fq.locked=false; fqNext(); }, ok?900:1700);
+}
+function fqFinish(){ fq.finished=true; save(); renderFryHome(); nav('fqhome'); toast(`Session done · ${fq.correct}/${fq.total} right · ${fq.mastered} newly mastered 🐉`); }
+function fqQuit(){ if(fq) fq.finished=true; save(); renderFryHome(); nav('fqhome'); }
 
 refreshHome();
 </script>
