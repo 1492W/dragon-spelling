@@ -207,6 +207,42 @@
     border:1px solid var(--gold);color:var(--parch);padding:10px 18px;border-radius:24px;font-weight:700;z-index:20;
     box-shadow:0 6px 20px var(--shadow);max-width:90%;text-align:center;font-size:14px;animation:fade .25s;}
   .hidden{display:none!important;}
+
+  /* Spire card + Duel */
+  .spire-card{width:100%;cursor:pointer;text-align:left;color:var(--parch);display:flex;align-items:center;gap:13px;
+    background:linear-gradient(160deg,#3a1d2e,#241433);border:1px solid #8a4a6a;border-radius:16px;padding:14px 16px;margin-bottom:12px;
+    box-shadow:0 4px 0 #0c0926,0 0 18px rgba(214,95,126,.22),inset 0 0 20px rgba(154,123,224,.1);}
+  .spire-card:active{transform:translateY(3px);box-shadow:0 1px 0 #0c0926;}
+  .spire-ic{font-size:30px;filter:drop-shadow(0 0 8px rgba(244,217,133,.4));}
+  .spire-body{flex:1;display:flex;flex-direction:column;}
+  .spire-ti{font-family:'Grenze Gotisch';font-weight:600;font-size:21px;color:var(--gold-bright);}
+  .spire-de{font-size:12px;color:var(--amethyst);}
+  .spire-floor{font-family:'Cormorant Garamond';font-size:13px;color:var(--amethyst);text-align:center;}
+  .spire-floor b{display:block;font-size:22px;color:var(--gold-bright);}
+
+  .enemy{text-align:center;margin-bottom:10px;}
+  .enemy-emoji{font-size:64px;filter:drop-shadow(0 6px 14px rgba(8,6,30,.6));animation:menace 3s ease-in-out infinite;}
+  .enemy-emoji.hit{animation:shake .3s;}
+  @keyframes menace{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.04)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px) rotate(-4deg)}60%{transform:translateX(9px) rotate(4deg)}}
+  .enemy-name{font-family:'Cormorant Garamond';font-weight:600;font-size:17px;color:#f0a0b4;margin-top:2px;}
+  .hpbar{position:relative;height:20px;border-radius:11px;background:rgba(14,11,38,.7);border:1px solid var(--line);overflow:hidden;margin:6px auto 0;max-width:300px;}
+  .hpbar i{position:absolute;inset:0;width:100%;transform-origin:left;transition:width .35s ease;border-radius:11px;}
+  .enemy-hp i{background:linear-gradient(90deg,#d65f7e,#a83050);}
+  .player-hp i{background:linear-gradient(90deg,#5fb87a,#3a8f6a);}
+  .hpbar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+
+  .combo-wrap{margin:4px 0 10px;}
+  .combo-bar{height:8px;border-radius:6px;background:rgba(14,11,38,.7);border:1px solid var(--line);overflow:hidden;}
+  .combo-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold-bright));transition:width .25s;}
+  .combo-txt{text-align:center;font-family:'Cormorant Garamond';font-weight:600;font-size:14px;color:var(--amethyst);margin-top:3px;letter-spacing:1px;}
+  .combo-txt.hot{color:var(--gold-bright);text-shadow:0 0 10px rgba(244,217,133,.6);}
+  .duel-stage{padding:14px;}
+  .player-bar{display:flex;align-items:center;gap:10px;margin-top:10px;font-family:'Cormorant Garamond';font-size:14px;color:var(--parch2);}
+  .player-bar .hpbar{flex:1;margin:0;max-width:none;}
+  .party{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px;min-height:22px;}
+  .party .pd{font-size:20px;filter:drop-shadow(0 0 5px rgba(154,123,224,.4));}
+  .party .pd.none{font-size:12px;color:var(--amethyst);font-family:'Nunito';filter:none;}
   footer{text-align:center;font-size:11px;color:#6a5fa0;margin-top:22px;}
 </style>
 </head>
@@ -257,6 +293,14 @@
       <div class="mini"><b id="st-mistakes">0</b><span>IN LAIR</span></div>
     </div>
     <button id="daily" class="daily-btn" onclick="claimDaily()">✦ Daily Verse — claim ink ✦</button>
+    <button class="spire-card" onclick="enterSpire()">
+      <span class="spire-ic">⚔️</span>
+      <span class="spire-body">
+        <span class="spire-ti">Spire of Words</span>
+        <span class="spire-de">Battle Word Wraiths — spell to strike</span>
+      </span>
+      <span class="spire-floor">Floor <b id="spire-floor-lbl">1</b></span>
+    </button>
     <div class="section-label">Quests</div>
     <div class="menu">
       <button class="mcard" onclick="nav('play')"><span class="ic">📖</span><span class="ti">Spellbook</span><span class="de">Chapters to illuminate</span></button>
@@ -264,6 +308,33 @@
       <button class="mcard" onclick="nav('codex')"><span class="ic">🐉</span><span class="ti">Codex</span><span class="de">Your dragon hoard</span></button>
       <button class="mcard lair" id="lair-card" onclick="startMistakeLair()"><span class="ic">🔥</span><span class="ti">Mistake Lair</span><span class="de">Tame the words that beat you</span></button>
     </div>
+  </div>
+
+  <!-- DUEL -->
+  <div id="duel" class="screen">
+    <div class="scr-head"><button class="back-btn" onclick="quitDuel()">✕ Retreat</button><h2 id="duel-title">Spire · Floor 1</h2></div>
+    <div class="enemy">
+      <div class="enemy-emoji" id="enemy-emoji">👾</div>
+      <div class="enemy-name" id="enemy-name">Word Wraith</div>
+      <div class="hpbar enemy-hp"><i id="enemy-hp-fill"></i><span id="enemy-hp-txt">30 / 30</span></div>
+    </div>
+    <div class="combo-wrap"><div class="combo-bar"><i id="combo-fill"></i></div><div class="combo-txt" id="combo-txt">COMBO ×1</div></div>
+    <div class="stage duel-stage">
+      <button class="audio-btn" onclick="speakDuel()">🔊 Hear it</button>
+      <button class="peek" onclick="peekDuel()">👁 Peek</button>
+      <div id="duel-display" class="word-display"></div>
+      <div class="vstat" id="duel-vstat"></div>
+    </div>
+    <div class="input-row">
+      <input class="spell-input" id="duel-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="spell to attack…">
+      <button class="go" onclick="submitDuel()">⚔️</button>
+    </div>
+    <div class="feedback" id="duel-feedback"></div>
+    <div class="player-bar">
+      <span>🛡️ You</span>
+      <div class="hpbar player-hp"><i id="player-hp-fill"></i><span id="player-hp-txt">100 / 100</span></div>
+    </div>
+    <div class="party" id="duel-party"></div>
   </div>
 
   <!-- PLAY (chapters) -->
@@ -386,7 +457,7 @@ const RARITY_W={common:60,rare:25,epic:11,legendary:3.5,mythic:0.5};
 
 /* ===================== STORAGE ===================== */
 const KEY='dragonSpelling_v1';
-const DEFAULT={ink:0,owned:{},mistakes:{},best:{},seeded:false,lastDaily:null,dailyStreak:0,spelled:0,voiceURI:null};
+const DEFAULT={ink:0,owned:{},mistakes:{},best:{},seeded:false,lastDaily:null,dailyStreak:0,spelled:0,voiceURI:null,spireFloor:1,spireBest:0};
 function load(){try{return Object.assign({},DEFAULT,JSON.parse(localStorage.getItem(KEY))||{})}catch(e){return Object.assign({},DEFAULT,window._m||{})}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){window._m=state}}
 let state=load();
@@ -414,6 +485,7 @@ function refreshHome(){
   const mc=Object.keys(state.mistakes).length;
   $('#st-mistakes').textContent=mc;
   $('#lair-card').style.display = mc? '' : 'none';
+  const fl=$('#spire-floor-lbl'); if(fl) fl.textContent=state.spireFloor||1;
   const today=new Date().toISOString().slice(0,10);
   const d=$('#daily');
   if(state.lastDaily===today){ d.classList.add('done'); d.textContent='✦ Daily Verse claimed — come back tomorrow ✦'; }
@@ -601,6 +673,9 @@ function finish(){
   const times=run.times.slice();
   const avg=times.length?(times.reduce((a,b)=>a+b,0)/times.length):null;
   nav('results');
+  const caps=document.querySelectorAll('#results .res-grid .c span');
+  if(caps[0])caps[0].textContent='spelled'; if(caps[1])caps[1].textContent='⚡ lightning'; if(caps[2])caps[2].textContent='🖋️ ink';
+  $('#res-again').textContent='Again';
   $('#res-emoji').textContent = run.lightning>=run.goal? '🏆' : (run.correct===run.goal? '🐉':'📖');
   $('#res-title').textContent = run.lair? (Object.keys(state.mistakes).length===0?'Lair cleared!':'Mistake Lair') : run.title+' complete';
   $('#res-correct').textContent=run.correct+'/'+run.goal;
@@ -682,6 +757,148 @@ function toast(msg){ let t=document.querySelector('.toast'); if(t)t.remove();
 document.addEventListener('keydown',e=>{
   if($('#run').classList.contains('active') && e.key==='Enter') submitRun();
 });
+
+/* ===================== SPELL DUEL / SPIRE ===================== */
+const WRAITHS=['👾','👹','🧟','🦇','🕷️','🐗','🦑','🪼','🐉'];
+const DUEL_EASY=['ship','rain','boat','jump','play','green','black','night','tree','moon'];
+const DUEL_MID=['friend','because','people','said','where','island','prison','dragon','around','picked'];
+const DUEL_HARD=['impossible','mysterious','different','quickly','surprise','security','supposed','realizes','weapons','poison','castle','thought'];
+const BOSS_WORDS=['impossible','mysterious','their','there','because','beautiful','different','separate'];
+function dragonPower(){
+  const w={common:1,rare:2,epic:4,legendary:7,mythic:12};
+  let p=0; Object.keys(state.owned).forEach(id=>{ const d=DRAGONS.find(x=>x.id===id); if(d)p+=w[d.rarity]||0; });
+  return p;
+}
+function floorWords(floor,boss){
+  if(boss) return BOSS_WORDS;
+  if(floor<=3) return DUEL_EASY;
+  if(floor<=7) return DUEL_EASY.concat(DUEL_MID);
+  return DUEL_MID.concat(DUEL_HARD);
+}
+let duel=null;
+function enterSpire(){ startFloor(state.spireFloor||1); }
+function startFloor(floor){
+  const boss = floor%5===0;
+  const eHP = Math.round((28 + floor*12) * (boss?2.2:1));
+  duel={floor,boss,eMax:eHP,eHP,pMax:100,pHP:100,combo:0,maxCombo:0,ink:0,
+        words:floorWords(floor,boss).slice().sort(()=>Math.random()-0.5),wi:0,locked:false,finished:false,
+        emoji: boss?'🐲':WRAITHS[Math.min(WRAITHS.length-1,Math.floor((floor-1)/2))]};
+  $('#duel-title').textContent='Spire · Floor '+floor+(boss?' · BOSS':'');
+  $('#enemy-emoji').textContent=duel.emoji;
+  $('#enemy-name').textContent= boss? 'Elder Word Wraith' : 'Word Wraith';
+  renderParty(); drawBars(); drawCombo();
+  nav('duel'); duelNext();
+}
+function renderParty(){
+  const el=$('#duel-party'); el.innerHTML='';
+  const owned=Object.keys(state.owned);
+  if(!owned.length){ el.innerHTML='<span class="pd none">No dragons yet — hatch some to boost attack!</span>'; return; }
+  const wt={common:1,rare:2,epic:4,legendary:7,mythic:12};
+  owned.map(id=>DRAGONS.find(d=>d.id===id)).filter(Boolean)
+    .sort((a,b)=>wt[b.rarity]-wt[a.rarity]).slice(0,6)
+    .forEach(d=>{ const s=document.createElement('span'); s.className='pd'; s.textContent=d.emoji; s.title=d.name; el.appendChild(s); });
+  const tag=document.createElement('span'); tag.className='pd none'; tag.textContent='+'+dragonPower()+' atk'; el.appendChild(tag);
+}
+function drawBars(){
+  $('#enemy-hp-fill').style.width=Math.max(0,duel.eHP/duel.eMax*100)+'%';
+  $('#enemy-hp-txt').textContent=Math.max(0,duel.eHP)+' / '+duel.eMax;
+  $('#player-hp-fill').style.width=Math.max(0,duel.pHP/duel.pMax*100)+'%';
+  $('#player-hp-txt').textContent=Math.max(0,duel.pHP)+' / '+duel.pMax;
+}
+function drawCombo(){
+  const c=Math.min(duel.combo,10);
+  $('#combo-fill').style.width=(c/10*100)+'%';
+  const t=$('#combo-txt'); t.textContent='COMBO ×'+(1+c*0.1).toFixed(1).replace(/\.0$/,'');
+  t.classList.toggle('hot',duel.combo>=5);
+}
+function duelNext(){
+  if(!duel||duel.finished) return;
+  if(duel.wi>=duel.words.length){ duel.words=duel.words.sort(()=>Math.random()-0.5); duel.wi=0; }
+  duel.cur=duel.words[duel.wi++]; duel.qStart=Date.now(); duel.peeked=false;
+  $('#duel-display').textContent='• • •'; $('#duel-display').classList.remove('peeking');
+  $('#duel-feedback').textContent=''; $('#duel-feedback').className='feedback';
+  $('#duel-vstat').textContent='';
+  const inp=$('#duel-input'); inp.value=''; inp.disabled=false; setTimeout(()=>{inp.focus();speakDuel();},200);
+}
+function speakDuel(){ if(duel&&duel.cur) speak(duel.cur); }
+function peekDuel(){
+  if(!duel||duel.locked) return; duel.peeked=true;
+  const d=$('#duel-display'); d.textContent=duel.cur; d.classList.add('peeking');
+  setTimeout(()=>{ if(duel&&!duel.locked){ d.textContent='• • •'; d.classList.remove('peeking'); } },1100);
+}
+function submitDuel(){
+  if(!duel||duel.locked||duel.finished) return;
+  const val=($('#duel-input').value||'').trim().toLowerCase();
+  if(!val) return;
+  duel.locked=true; $('#duel-input').disabled=true;
+  const word=duel.cur, fb=$('#duel-feedback');
+  const elapsed=(Date.now()-duel.qStart)/1000;
+  const ok=val===word.toLowerCase();
+  if(ok){
+    let tierMult,tName;
+    if(!duel.peeked && elapsed<TIER.spell.blaze){tierMult=2.2;tName='⚡ CRITICAL!';}
+    else if(!duel.peeked && elapsed<TIER.spell.swift){tierMult=1.6;tName='Strong hit!';}
+    else if(!duel.peeked && elapsed<TIER.spell.fast){tierMult=1.2;tName='Hit!';}
+    else {tierMult=.7;tName='Weak hit';}
+    duel.combo++; duel.maxCombo=Math.max(duel.maxCombo,duel.combo);
+    const comboMult=1+Math.min(duel.combo,10)*0.1;
+    const dmg=Math.max(1,Math.round((10+dragonPower())*tierMult*comboMult));
+    duel.eHP-=dmg; duel.ink += (tierMult>=2.2?3:tierMult>=1.6?2:1);
+    delete state.mistakes[word];
+    $('#duel-display').textContent=word;
+    fb.textContent=tName+'  −'+dmg+' HP'+(duel.combo>=2?'  (×'+comboMult.toFixed(1)+')':''); fb.className='feedback ok';
+    const ee=$('#enemy-emoji'); ee.classList.remove('hit'); void ee.offsetWidth; ee.classList.add('hit');
+    if(tierMult>=2.2) sparkle('⚡');
+    drawBars(); drawCombo();
+    if(duel.eHP<=0) return setTimeout(winFloor,650);
+    setTimeout(()=>{ duel.locked=false; duelNext(); },800);
+  } else {
+    duel.combo=0;
+    let html=''; for(let i=0;i<word.length;i++){ const t=val[i]; html+=(t&&t.toLowerCase()===word[i].toLowerCase())?word[i]:`<span class="miss">${word[i]}</span>`; }
+    $('#duel-display').innerHTML=html;
+    const hit=Math.round(12+duel.floor*1.5);
+    duel.pHP-=hit; state.mistakes[word]=1;
+    fb.textContent='✗ '+word+'   wraith strikes −'+hit+' HP'; fb.className='feedback no';
+    drawBars(); drawCombo(); save();
+    if(duel.pHP<=0) return setTimeout(loseFloor,1100);
+    setTimeout(()=>{ duel.locked=false; duelNext(); },1500);
+  }
+}
+function freeDrop(){
+  const r=Math.random(); const rar = r<0.55?'rare':r<0.85?'epic':r<0.97?'legendary':'mythic';
+  let pool=DRAGONS.filter(d=>d.rarity===rar && !state.owned[d.id]);
+  if(!pool.length) pool=DRAGONS.filter(d=>!state.owned[d.id]);
+  if(!pool.length){ state.ink+=30; return null; }
+  const d=pool[Math.floor(Math.random()*pool.length)]; state.owned[d.id]=1; return d;
+}
+function winFloor(){
+  duel.finished=true;
+  const reward=Math.round((20+duel.floor*6)*(duel.boss?2:1)*inkMult());
+  duel.ink+=reward; state.ink+=duel.ink;
+  if(duel.floor>=(state.spireBest||0)) state.spireBest=duel.floor;
+  state.spireFloor=duel.floor+1;
+  let dropMsg=''; if(duel.boss){ const d=freeDrop(); if(d) dropMsg=' · A '+d.name+' joins you!'; }
+  save(); showDuelResult(true,reward,dropMsg);
+}
+function loseFloor(){ duel.finished=true; state.ink+=duel.ink; save(); showDuelResult(false,0,''); }
+function showDuelResult(win,reward,dropMsg){
+  nav('results');
+  $('#res-emoji').textContent=win?(duel.boss?'👑':'⚔️'):'💀';
+  $('#res-title').textContent=win?('Floor '+duel.floor+' cleared!'):('Defeated on Floor '+duel.floor);
+  $('#res-correct').textContent='F'+duel.floor;
+  $('#res-lightning').textContent=duel.maxCombo;
+  $('#res-ink').textContent=duel.ink;
+  $('#res-miss').innerHTML = win
+    ? `<div style="color:var(--leaf);font-family:Cormorant Garamond;font-size:17px;margin:8px;">+${reward} 🖋️ reward${dropMsg}</div>`
+    : `<div style="color:#f0a0b4;font-family:Cormorant Garamond;font-size:16px;margin:8px;">The wraith won this floor — try again, you keep your ink.</div>`;
+  const caps=document.querySelectorAll('#results .res-grid .c span');
+  if(caps[0])caps[0].textContent='floor'; if(caps[1])caps[1].textContent='max combo'; if(caps[2])caps[2].textContent='🖋️ ink';
+  $('#res-again').textContent = win? 'Next floor ▶' : 'Retry floor';
+  $('#res-again').onclick = ()=> startFloor(win? duel.floor+1 : duel.floor);
+  topInk();
+}
+function quitDuel(){ if(duel&&!duel.finished){ state.ink+=duel.ink; duel.finished=true; save(); } nav('home'); }
+document.addEventListener('keydown',e=>{ if($('#duel').classList.contains('active') && e.key==='Enter') submitDuel(); });
 
 refreshHome();
 </script>
